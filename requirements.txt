@@ -55,6 +55,7 @@ jupyterlab_server==2.22.1
 markdown-it-py==3.0.0
 MarkupSafe==2.1.2
 matplotlib-inline==0.1.6
+maturin==0.13.0 
 mdurl==0.1.2
 mistune==2.0.5
 narwhals==1.20.1
