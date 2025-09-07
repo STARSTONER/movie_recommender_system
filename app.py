@@ -29,9 +29,18 @@ def recommend(movie):
         recommended_movie_posters.append(fetch_poster(movie_id))
     return recommended_movies,recommended_movie_posters
 
+import gdown
+import os
 
+# Download similarity.pkl from Google Drive if not present
+SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
+if not os.path.exists("similarity.pkl"):
+    gdown.download(f"https://drive.google.com/uc?id={SIMILARITY_FILE_ID}", "similarity.pkl", quiet=False)
 
-similarity=pickle.load(open('similarity.pkl','rb'))
+# Load similarity.pkl
+similarity = pickle.load(open('similarity.pkl','rb'))
+
+ 
 
 
 
