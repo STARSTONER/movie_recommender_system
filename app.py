@@ -28,23 +28,35 @@ def recommend(movie):
 
     return recommended_movies, recommended_movie_posters
 
-# Download similarity.pkl from Google Drive if not present
+# Always download similarity.pkl from Google Drive (overwrite if exists)
+if os.path.exists("similarity.pkl"):
+    os.remove("similarity.pkl")
+
 SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
-if not os.path.exists("similarity.pkl"):
-    url = f"https://drive.google.com/uc?export=download&id={SIMILARITY_FILE_ID}"
-    # Handle large file downloads with confirmation
-    session = requests.Session()
-    response = session.get(url, stream=True)
-    # Check for confirmation token
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            url = f"https://drive.google.com/uc?export=download&confirm={value}&id={SIMILARITY_FILE_ID}"
-            response = session.get(url, stream=True)
-            break
-    with open("similarity.pkl", "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
+url = "https://drive.google.com/uc?export=download"
+params = {'id': SIMILARITY_FILE_ID}
+session = requests.Session()
+response = session.get(url, params=params, stream=True)
+
+token = None
+for key, value in response.cookies.items():
+    if 'download_warning' in key:
+        token = value
+        break
+
+if token:
+    params['confirm'] = token
+    response = session.get(url, params=params, stream=True)
+
+with open("similarity.pkl", "wb") as f:
+    for chunk in response.iter_content(chunk_size=8192):
+        if chunk:
+            f.write(chunk)
+
+# Verify file size (optional, but helps debug)
+file_size = os.path.getsize("similarity.pkl")
+if file_size < 100000000:  # Less than ~100MB, likely wrong
+    raise ValueError("Downloaded file too small; check Drive link")
 
 # Load similarity.pkl
 with open("similarity.pkl", "rb") as f:
@@ -55,7 +67,7 @@ with open("movies.pkl", "rb") as f:
     movies_list = pickle.load(f)
 movies = pd.DataFrame(movies_list)
 
-movies_titles = movies_list['title'].values
+movies_titles = movies['title'].values
 st.title('Movie Recommender System')
 
 option = st.selectbox(
