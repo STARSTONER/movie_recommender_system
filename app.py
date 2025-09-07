@@ -33,29 +33,19 @@ if os.path.exists("similarity.pkl"):
     os.remove("similarity.pkl")
 
 SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
-url = "https://drive.google.com/uc?export=download"
-params = {'id': SIMILARITY_FILE_ID}
+url = "https://drive.usercontent.google.com/download?export=download"
+params = {'id': SIMILARITY_FILE_ID, 'confirm': 't'}
 session = requests.Session()
 response = session.get(url, params=params, stream=True)
-
-token = None
-for key, value in response.cookies.items():
-    if 'download_warning' in key:
-        token = value
-        break
-
-if token:
-    params['confirm'] = token
-    response = session.get(url, params=params, stream=True)
 
 with open("similarity.pkl", "wb") as f:
     for chunk in response.iter_content(chunk_size=8192):
         if chunk:
             f.write(chunk)
 
-# Verify file size (optional, but helps debug)
+# Verify file size (adjust threshold to ~180MB)
 file_size = os.path.getsize("similarity.pkl")
-if file_size < 100000000:  # Less than ~100MB, likely wrong
+if file_size < 100000000:
     raise ValueError("Downloaded file too small; check Drive link")
 
 # Load similarity.pkl
