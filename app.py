@@ -2,6 +2,8 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
+import gdown
+import os
 
 def fetch_poster(movie_id):
     response = requests.get(f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=02b34be131731e82c195668ab848e177&language=en-US')
@@ -29,9 +31,7 @@ def recommend(movie):
         recommended_movie_posters.append(fetch_poster(movie_id))
     return recommended_movies,recommended_movie_posters
 
-import gdown
-import os
-
+ 
 # Download similarity.pkl from Google Drive if not present
 SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
 if not os.path.exists("similarity.pkl"):
@@ -41,8 +41,6 @@ if not os.path.exists("similarity.pkl"):
 similarity = pickle.load(open('similarity.pkl','rb'))
 
  
-
-
 
 movies_list=pickle.load(open('movies.pkl','rb'))
 movies=pd.DataFrame(movies_list)
