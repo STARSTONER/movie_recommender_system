@@ -14,7 +14,6 @@ def fetch_poster(movie_id):
     else:
         return "https://via.placeholder.com/500x750?text=No+Poster+Available"
 
-
 def recommend(movie):
     movies_index = movies[movies['title'] == movie].index[0]
     distances = similarity[movies_index]
@@ -29,19 +28,27 @@ def recommend(movie):
 
     return recommended_movies, recommended_movie_posters
 
-
 # Download similarity.pkl from Google Drive if not present
 SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
 if not os.path.exists("similarity.pkl"):
     url = f"https://drive.google.com/uc?export=download&id={SIMILARITY_FILE_ID}"
-    r = requests.get(url)
+    # Handle large file downloads with confirmation
+    session = requests.Session()
+    response = session.get(url, stream=True)
+    # Check for confirmation token
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            url = f"https://drive.google.com/uc?export=download&confirm={value}&id={SIMILARITY_FILE_ID}"
+            response = session.get(url, stream=True)
+            break
     with open("similarity.pkl", "wb") as f:
-        f.write(r.content)
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
 
 # Load similarity.pkl
 with open("similarity.pkl", "rb") as f:
     similarity = pickle.load(f)
-
 
 # Load movies.pkl
 with open("movies.pkl", "rb") as f:
