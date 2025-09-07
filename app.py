@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
-import gdown
 import os
 
 def fetch_poster(movie_id):
@@ -10,56 +9,59 @@ def fetch_poster(movie_id):
     data = response.json()
     print(data)  # Debugging: See the entire response
 
-    # Check if the 'poster_path' key is in the response
     if 'poster_path' in data:
         return "https://image.tmdb.org/t/p/w500" + data['poster_path']
     else:
-        return "https://via.placeholder.com/500x750?text=No+Poster+Available"  # Placeholder image if no poster
+        return "https://via.placeholder.com/500x750?text=No+Poster+Available"
 
 
 def recommend(movie):
-    movies_index=movies[movies['title']==movie].index[0]
-    distances=similarity[movies_index]
-    movies_list=sorted(list(enumerate(distances)),reverse=True,key=lambda x:x[1])[1:6]
-    recommended_movie_posters=[]
+    movies_index = movies[movies['title'] == movie].index[0]
+    distances = similarity[movies_index]
+    movies_list_sorted = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+    recommended_movie_posters = []
+    recommended_movies = []
 
-    recommended_movies=[]
-    for i in movies_list:
-        movie_id=movies.iloc[i[0]].movie_id
-        #fetch poster from tmdb using api
+    for i in movies_list_sorted:
+        movie_id = movies.iloc[i[0]].movie_id
         recommended_movies.append(movies.iloc[i[0]].title)
         recommended_movie_posters.append(fetch_poster(movie_id))
-    return recommended_movies,recommended_movie_posters
 
- 
+    return recommended_movies, recommended_movie_posters
+
+
 # Download similarity.pkl from Google Drive if not present
 SIMILARITY_FILE_ID = "1kRkzQzEoXkeHQh4rC5O9xb35B-XR1Ejw"
 if not os.path.exists("similarity.pkl"):
-    gdown.download(f"https://drive.google.com/uc?id={SIMILARITY_FILE_ID}", "similarity.pkl", quiet=False)
+    url = f"https://drive.google.com/uc?export=download&id={SIMILARITY_FILE_ID}"
+    r = requests.get(url)
+    with open("similarity.pkl", "wb") as f:
+        f.write(r.content)
 
 # Load similarity.pkl
-similarity = pickle.load(open('similarity.pkl','rb'))
+with open("similarity.pkl", "rb") as f:
+    similarity = pickle.load(f)
 
- 
 
-movies_list=pickle.load(open('movies.pkl','rb'))
-movies=pd.DataFrame(movies_list)
+# Load movies.pkl
+with open("movies.pkl", "rb") as f:
+    movies_list = pickle.load(f)
+movies = pd.DataFrame(movies_list)
 
-movies_list=movies_list['title'].values
+movies_titles = movies_list['title'].values
 st.title('Movie Recommender System')
 
 option = st.selectbox(
-    "How would you like to be contacted?",
-    (movies_list),
+    "Select a movie:",
+    movies_titles,
 )
 
 st.write("You selected:", option)
 
 st.button("Reset", type="primary")
 if st.button("Recommend"):
-    names,posters=recommend(option)
-
-    col1,col2,col3,col4,col5 =st.columns(5)
+    names, posters = recommend(option)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         st.text(names[0])
@@ -76,4 +78,3 @@ if st.button("Recommend"):
     with col5:
         st.text(names[4])
         st.image(posters[4])
-
